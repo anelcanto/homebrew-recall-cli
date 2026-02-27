@@ -1,0 +1,76 @@
+name: Update Formula
+
+on:
+  repository_dispatch:
+    types: [new-release]
+
+jobs:
+  update:
+    name: Update recall-cli formula
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get release info from PyPI
+        id: pypi
+        env:
+          VERSION: ${{ github.event.client_payload.version }}
+        run: |
+          # Strip leading 'v' from tag (v0.2.0 -> 0.2.0)
+          PKG_VERSION="${VERSION#v}"
+          echo "pkg_version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
+
+          # Fetch metadata from PyPI
+          API_URL="https://pypi.org/pypi/recall-cli/${PKG_VERSION}/json"
+          echo "Fetching: $API_URL"
+          DATA=$(curl -sf "$API_URL")
+
+          SDIST_URL=$(echo "$DATA" | python3 -c "
+          import sys, json
+          d = json.load(sys.stdin)
+          for f in d['urls']:
+              if f['packagetype'] == 'sdist':
+                  print(f['url'])
+                  break
+          ")
+          SDIST_SHA256=$(echo "$DATA" | python3 -c "
+          import sys, json
+          d = json.load(sys.stdin)
+          for f in d['urls']:
+              if f['packagetype'] == 'sdist':
+                  print(f['digests']['sha256'])
+                  break
+          ")
+
+          echo "url=$SDIST_URL" >> "$GITHUB_OUTPUT"
+          echo "sha256=$SDIST_SHA256" >> "$GITHUB_OUTPUT"
+          echo "Version: $PKG_VERSION"
+          echo "URL: $SDIST_URL"
+          echo "SHA256: $SDIST_SHA256"
+
+      - name: Update formula
+        env:
+          PKG_VERSION: ${{ steps.pypi.outputs.pkg_version }}
+          NEW_URL: ${{ steps.pypi.outputs.url }}
+          NEW_SHA256: ${{ steps.pypi.outputs.sha256 }}
+        run: |
+          FORMULA="Formula/recall-cli.rb"
+
+          sed -i "s|url \".*\"|url \"$NEW_URL\"|" "$FORMULA"
+          sed -i "s|sha256 \".*\"|sha256 \"$NEW_SHA256\"|" "$FORMULA"
+
+          echo "Updated formula:"
+          grep -E 'url|sha256' "$FORMULA"
+
+      - name: Commit and push
+        env:
+          PKG_VERSION: ${{ steps.pypi.outputs.pkg_version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/recall-cli.rb
+          git commit -m "chore: update formula to v${PKG_VERSION}"
+          git push
