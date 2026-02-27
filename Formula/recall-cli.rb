@@ -9,26 +9,13 @@ class RecallCli < Formula
 
   depends_on "python@3.12"
 
-  resource "typer" do
-    url "https://files.pythonhosted.org/packages/source/t/typer/typer-0.15.1.tar.gz"
-    sha256 "a0588c0a7fa68a1978a069818657778f86abe6ff5ea6abf472f940a08bfe4f0a"
-  end
-
-  resource "rich" do
-    url "https://files.pythonhosted.org/packages/source/r/rich/rich-13.9.4.tar.gz"
-    sha256 "439594978a49a09530cff7ebc4b5c7103ef57baf48d5ea3184f21d9a2befa098"
-  end
-
-  resource "httpx" do
-    url "https://files.pythonhosted.org/packages/source/h/httpx/httpx-0.28.1.tar.gz"
-    sha256 "75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc"
-  end
-
   def install
-    virtualenv_install_with_resources
+    venv = virtualenv_create(libexec, "python3.12")
+    venv.pip_install buildpath
+    bin.install_symlink libexec/"bin/recall"
   end
 
   test do
-    system "#{bin}/recall", "--help"
+    assert_match "recall", shell_output("#{bin}/recall --help")
   end
 end
