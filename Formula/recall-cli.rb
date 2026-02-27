@@ -1,8 +1,8 @@
 class RecallCli < Formula
   desc "Personal semantic memory system — store, search, and manage memories locally"
   homepage "https://github.com/anelcanto/recall"
-  url "https://files.pythonhosted.org/packages/3c/f2/11866ad83bf57d3f406ddbf4eb188ddebecfe06011114dfe2c5a90b9b99e/recall_cli-0.3.2.tar.gz"
-  sha256 "73aef68166543c4073d39d0227d48af06a621ced5dfda0295da7e02a6ac1396e"
+  url "https://files.pythonhosted.org/packages/6f/a6/f55a2da647f3ff9450ded06219cd75e4f14e9f792595eb669fb5e3af5317/recall_cli-0.3.3.tar.gz"
+  sha256 "3ad9cc2b213442d3270fb2ea78ce95420c09acbabc5a7c0b8cb310b5bae0a6e9"
   license "MIT"
 
   depends_on "python@3.12"
